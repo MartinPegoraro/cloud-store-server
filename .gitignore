@@ -1,0 +1,10 @@
+node_modules/
+node_modules
+
+client/node_modules
+
+public/
+
+# dotenv environment variables file
+.env
+
