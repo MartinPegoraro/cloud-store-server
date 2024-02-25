@@ -1,16 +1,18 @@
 import { Router } from "express";
-import pool from "../database.js";
+import pool from "../../../database.js";
+import { store } from "./store.js";
 
 const router = Router()
 
 router.get('/list', async (req, res) => {
-    try {
-        const [result] = await pool.query("SELECT * FROM product")
-        return console.log(result);
+    store.listAll()
+        .then((data) => {
+            console.log(data);
+            res.status(200).json({ data: data, message: 'Productos listados' })
+        }).catch((err) => {
+            res.status(500).json({ message: err.message })
+        })
 
-    } catch (error) {
-        res.status(500).json({ message: error.message })
-    }
 })
 router.get('/list/:id', async (req, res) => {
     try {
@@ -24,16 +26,13 @@ router.get('/list/:id', async (req, res) => {
 })
 
 router.post('/addProduct', async (req, res) => {
-    try {
-        const { marca, genero } = req.body
-
-        const resultProduct = await pool.query('INSERT INTO product SET ?', [{ marca, genero }])
-        return resultProduct
-
-    } catch (error) {
-        res.status(500).json({ message: error.message })
-
-    }
+    store.add(req.body)
+        .then((data) => {
+            console.log(data);
+            res.status(200).json({ data: data, message: 'Producto creado' }) // Enviar los datos como una respuesta HTTP
+        }).catch((err) => {
+            res.status(500).json({ message: err.message })
+        })
 })
 
 router.patch('/editProduct/:id', async (req, res) => {
