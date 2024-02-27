@@ -25,8 +25,28 @@ router.get('/list/:id', async (req, res) => {
         })
 })
 
+router.get('/listSize', async (req, res) => {
+    store.listSize()
+        .then((data) => {
+            // console.log(data);
+            res.status(200).json({ data: data, message: 'Producto encontrado' })
+        }).catch((err) => {
+            res.status(500).json({ message: err.message })
+        })
+})
+
 router.post('/addProduct', async (req, res) => {
     store.add(req.body)
+        .then((data) => {
+            // console.log(data);
+            res.status(200).json({ data: data, message: 'Producto creado' }) // Enviar los datos como una respuesta HTTP
+        }).catch((err) => {
+            res.status(500).json({ message: err.message })
+        })
+})
+
+router.post('/addProduct/addSize', async (req, res) => {
+    store.addSizeColor(req.body)
         .then((data) => {
             // console.log(data);
             res.status(200).json({ data: data, message: 'Producto creado' }) // Enviar los datos como una respuesta HTTP
@@ -38,11 +58,22 @@ router.post('/addProduct', async (req, res) => {
 router.patch('/editProduct/:id', async (req, res) => {
     const data = req.body
     const id = req.params.id
-    console.log(data, id);
     store.updateOne(id, data)
         .then((data) => {
 
             res.status(200).json({ data: data, message: 'Producto modificado' }) // Enviar los datos como una respuesta HTTP
+        }).catch((err) => {
+            res.status(500).json({ message: err.message })
+        })
+
+})
+
+router.patch('/editStock/:id', async (req, res) => {
+    const data = req.body
+    const id = req.params.id
+    store.updateStock(id, data)
+        .then((data) => {
+            res.status(200).json({ data: data, message: 'Stock modificado' }) // Enviar los datos como una respuesta HTTP
         }).catch((err) => {
             res.status(500).json({ message: err.message })
         })
