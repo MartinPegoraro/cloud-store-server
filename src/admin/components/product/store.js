@@ -8,7 +8,7 @@ const returnData = data => {
 }
 
 async function add(data) {
-    const [result] = await pool.query('INSERT INTO product SET ?', data);
+    const [result] = await pool.query('INSERT INTO product SET ?', { ...data, isActive: true });
 
     if (result && result.insertId) {
         const [product] = await pool.query('SELECT * FROM product WHERE id = ?', [result.insertId]);
@@ -25,36 +25,48 @@ async function add(data) {
     }
 }
 async function addSizeColor(data) {
-    const datacopy = { ...data }
-    delete datacopy.amount
 
-    const [result] = await pool.query('INSERT INTO size SET ?', datacopy)
+    try {
+        const datacopy = { ...data }
+        delete datacopy.amount
 
-    if (result && result.insertId) {
-        const [sizeColor] = await pool.query('SELECT * FROM size WHERE id = ?', [result.insertId]);
-        if (sizeColor && sizeColor.length > 0) {
+        const [existsProduct] = await pool.query(`SELECT * FROM product WHERE id= ?`, [datacopy.product_id])
 
-            console.log(data.amount);
-            const stockData = {
-                size_id: result.insertId,
-                amount: data.amount,
-                uploadDate: new Date()
-            };
-            const [stockResult] = await pool.query('INSERT INTO stock SET ?', stockData);
-            if (stockResult && stockResult.insertId) {
-                console.log('Stock creado:', stockResult.insertId);
+        if (existsProduct.length > 0) {
+            const [result] = await pool.query('INSERT INTO size SET ?', datacopy)
+
+            if (result && result.insertId) {
+                const [sizeColor] = await pool.query('SELECT * FROM size WHERE id = ?', [result.insertId]);
+                if (sizeColor && sizeColor.length > 0) {
+                    console.log(data.amount);
+                    const stockData = {
+                        size_id: result.insertId,
+                        amount: data.amount,
+                        uploadDate: new Date()
+                    };
+                    const [stockResult] = await pool.query('INSERT INTO stock SET ?', stockData);
+                    if (stockResult && stockResult.insertId) {
+                        console.log('Stock creado:', stockResult.insertId);
+                    } else {
+                        console.log('No se pudo insertar el stock');
+                    }
+                    return sizeColor;
+                } else {
+                    console.log('No se pudo encontrar el talle creado');
+                    return null;
+                }
             } else {
-                console.log('No se pudo insertar el stock');
+                console.log('No se pudo insertar el talle');
+                return null;
             }
-            return sizeColor;
         } else {
-            console.log('No se pudo encontrar el talle creado');
-            return null;
+            throw new Error('No existe el producto al que quiere asignarle un tamaño y color');
         }
-    } else {
-        console.log('No se pudo insertar el talle');
-        return null;
+    } catch (error) {
+        console.error('Error al agregar tamaño y color:', error);
+        throw error;
     }
+
 }
 
 async function listAll() {
@@ -100,7 +112,6 @@ async function updateOne(id, data) {
 
 async function updateStock(id, data) {
     const [resultProductEdit] = await pool.query('UPDATE stock SET ? WHERE size_id = ?', [{ ...data, uploadDate: new Date() }, id]);
-    console.log(resultProductEdit);
     if (resultProductEdit.affectedRows > 0) {
         const [updatedProduct] = await pool.query(`
         SELECT size.*, product.*, stock.amount
@@ -122,12 +133,70 @@ async function updateStock(id, data) {
     }
 }
 
+async function updateSize(id, data) {
+    const [resultSizeEdit] = await pool.query('UPDATE size SET ? WHERE id = ?', [data, id]);
+    if (resultSizeEdit.affectedRows > 0) {
+        const [updateSize] = await pool.query('SELECT * FROM size WHERE id = ?', [id]);
+        if (updateSize && updateSize.length > 0) {
+            console.log('Producto modificado:', updateSize);
+            return updateSize;
+        } else {
+            console.log('No se pudo encontrar el producto modificado');
+            return null;
+        }
+    } else {
+        console.log('No se pudo actualizar el producto');
+        return null;
+    }
+}
+
+
+async function deleteProduct(id) {
+    const [resultDeleteProduct] = await pool.query(`UPDATE product SET ? WHERE id = ?`, [{ isActive: true }, id])
+    if (resultDeleteProduct.affectedRows > 0) {
+        const [deleteOneProduct] = await pool.query('SELECT * FROM product WHERE id = ?', [id]);
+        if (deleteOneProduct && deleteOneProduct.length > 0) {
+            console.log('Producto eliminado:', deleteOneProduct);
+            return deleteOneProduct;
+        } else {
+            console.log('No se pudo encontrar el producto eliminado');
+            return null;
+        }
+    } else {
+        console.log('No se pudo eliminar el producto');
+        return null;
+    }
+}
+
+async function deleteSize(id) {
+    try {
+        const [existSizeId] = await pool.query(`SELECT * FROM size WHERE id= ?`, [id])
+        console.log(existSizeId.length);
+        if (!existSizeId.length) {
+            throw new Error('no existe el registro que desea borrar')
+        }
+        const [resultDeleteStock] = await pool.query(`DELETE FROM stock WHERE size_id = ?`, [id])
+        console.log('registros borrados de stock', resultDeleteStock);
+        const [resultDeleteSize] = await pool.query(`DELETE FROM size WHERE id= ?`, [id])
+        console.log('Registro eliminado de size:', resultDeleteSize);
+
+        return resultDeleteSize
+    } catch (error) {
+        console.log('No se pudo eliminar el resgistro');
+        throw error;
+    }
+
+}
+
 export const store = {
-    add,
     listAll,
     listOne,
-    updateOne,
-    addSizeColor,
     listSize,
-    updateStock
+    add,
+    addSizeColor,
+    updateOne,
+    updateStock,
+    updateSize,
+    deleteProduct,
+    deleteSize
 }

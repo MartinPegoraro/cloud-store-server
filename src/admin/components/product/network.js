@@ -38,7 +38,6 @@ router.get('/listSize', async (req, res) => {
 router.post('/addProduct', async (req, res) => {
     store.add(req.body)
         .then((data) => {
-            // console.log(data);
             res.status(200).json({ data: data, message: 'Producto creado' }) // Enviar los datos como una respuesta HTTP
         }).catch((err) => {
             res.status(500).json({ message: err.message })
@@ -49,7 +48,7 @@ router.post('/addProduct/addSize', async (req, res) => {
     store.addSizeColor(req.body)
         .then((data) => {
             // console.log(data);
-            res.status(200).json({ data: data, message: 'Producto creado' }) // Enviar los datos como una respuesta HTTP
+            res.status(200).json({ data: data, message: 'Talle agregado' }) // Enviar los datos como una respuesta HTTP
         }).catch((err) => {
             res.status(500).json({ message: err.message })
         })
@@ -80,10 +79,37 @@ router.patch('/editStock/:id', async (req, res) => {
 
 })
 
+router.patch('/editSize/:id', async (req, res) => {
+    const data = req.body
+    const id = req.params.id
+    store.updateSize(id, data)
+        .then((data) => {
+            console.log(data);
+            res.status(200).json({ data: data, message: 'Talle modificado' }) // Enviar los datos como una respuesta HTTP
+        }).catch((err) => {
+            res.status(500).json({ message: err.message })
+        })
+
+})
+
 router.delete('/deleteProduct/:id', async (req, res) => {
     const id = req.params.id
-    const resultProductEdit = await pool.query('delete from product where id= ?', [id])
-    return console.log(resultProductEdit);
+    store.deleteProduct(id)
+        .then((data) => {
+            res.status(200).json({ data: data, message: 'Producto eliminado' }) // Enviar los datos como una respuesta HTTP
+        }).catch((err) => {
+            res.status(500).json({ message: err.message })
+        })
+})
+
+router.delete('/deleteSize/:id', async (req, res) => {
+    const id = req.params.id
+    store.deleteSize(id)
+        .then((data) => {
+            res.status(200).json({ data: data, message: 'Talle eliminado' }) // Enviar los datos como una respuesta HTTP
+        }).catch((err) => {
+            res.status(500).json({ message: err.message })
+        })
 })
 
 export default router
