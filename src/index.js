@@ -5,6 +5,8 @@ import { fileURLToPath } from 'url';
 import routes from './admin/routes/routes.js';
 import bodyParser from "body-parser";
 import { createTableUser, createTableStock, createTableSize, createTableProduct } from "../database/models/databaseSetup.js";
+import cors from 'cors'
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -17,6 +19,7 @@ app.use(morgan('dev'))
 app.use(express.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 app.use(express.json())
+app.use(cors({ origin: '*' }))
 app.use(routes)
 
 app.use(express.static(join(__dirname, 'public')))

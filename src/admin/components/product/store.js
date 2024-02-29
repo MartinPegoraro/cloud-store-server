@@ -38,7 +38,6 @@ async function addSizeColor(data) {
             if (result && result.insertId) {
                 const [sizeColor] = await pool.query('SELECT * FROM size WHERE id = ?', [result.insertId]);
                 if (sizeColor && sizeColor.length > 0) {
-                    console.log(data.amount);
                     const stockData = {
                         size_id: result.insertId,
                         amount: data.amount,
